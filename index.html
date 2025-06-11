@@ -6,20 +6,20 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen flex items-center justify-center px-4 bg-gray-100">
-  <div class="bg-white shadow-xl rounded-2xl p-8 max-w-3xl w-full">
-    <h1 class="text-3xl font-bold mb-4 text-center text-gray-800">🧠 Jargonify</h1>
-    <p class="text-center text-gray-600 mb-6">&copy; Exalux et Datamuse API</p>
+  <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8 max-w-3xl w-full">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-center text-gray-800">🧠 Jargonify</h1>
+    <p class="text-center text-gray-600 mb-5 sm:mb-6 text-sm sm:text-base">&copy; Exalux et Datamuse API</p>
 
-    <textarea id="userInput" rows="5" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Enter your sentence..."></textarea>
+    <textarea id="userInput" rows="5" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-sm sm:text-base" placeholder="Enter your sentence..."></textarea>
 
-    <div class="flex gap-4 mb-6 items-center">
-      <button id="paraphraseBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg relative group">
+    <div class="flex flex-col sm:flex-row gap-4 mb-6 items-stretch sm:items-center">
+      <button id="paraphraseBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base relative group">
         Paraphrase
         <span class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-1 -top-8 left-1/2 transform -translate-x-1/2"></span>
       </button>
     </div>
 
-    <div id="output" class="bg-gray-50 border rounded-lg p-4 text-gray-700 min-h-[80px]">
+    <div id="output" class="bg-gray-50 border rounded-lg p-3 sm:p-4 text-gray-700 min-h-[80px] text-sm sm:text-base">
       <p class="text-gray-500 italic">Paraphrased text will appear here...</p>
     </div>
 
@@ -62,10 +62,9 @@
       const paraphrased = [];
 
       for (let word of words) {
-        // Extract punctuation
         const match = word.match(/^([a-zA-Z]+)([.,!?]*)$/);
         if (!match) {
-          paraphrased.push(word); // non-alphabetic word, skip
+          paraphrased.push(word);
           continue;
         }
 
@@ -76,7 +75,7 @@
           const replacement = preserveCase(base, synonyms[Math.floor(Math.random() * synonyms.length)]);
           paraphrased.push(replacement + punctuation);
         } else {
-          paraphrased.push(word); // fallback to original
+          paraphrased.push(word);
         }
       }
 
@@ -90,7 +89,6 @@
       });
     }
 
-    // Listener to ensure it is working even if script is at top or deferred
     document.getElementById("paraphraseBtn").addEventListener("click", paraphraseText);
   </script>
 </body>
