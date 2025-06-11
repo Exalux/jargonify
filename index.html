@@ -1,22 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jargonify | Paraphrase Text</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-TU3UJzAmU/2XX4VKMn0wFO6xBhCU1Dn3KR4+G/vy0X3U9Ek0v6jDqBiGmF4bdF5cyDbO+JzKjLSGSk+QGkg2+Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="min-h-screen flex items-center justify-center px-4 bg-gray-100">
-  <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8 max-w-3xl w-full">
+  <style>
+        .shine-button {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0.2) 100%
+    );
+    transform: skewX(-20deg);
+  }
+  .shine-button:hover::before {
+    animation: shine 0.75s forwards;
+  }
+  @keyframes shine {
+    0% {
+      left: -75%;
+    }
+    100% {
+      left: 125%;
+    }
+  }
+    .collapsed {
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  #output:not(.collapsed) {
+    height: auto;
+    min-height: 80px; 
+    margin-bottom: 1rem;
+  }
+
+  #copyButtonContainer:not(.collapsed) {
+    height: auto;
+    margin-top: 1rem;
+  }
+  </style>
+  <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8 max-w-3xl w-full relative">
+    <!-- Logo & Brand -->
+    <div class="flex items-center mb-5">
+      <img src="https://avatars.githubusercontent.com/u/215483536?s=200&v=4" alt="Exalux" class="w-10 h-10 rounded-full mr-3">
+      <span class="text-lg font-semibold text-gray-700">v6/11</span>
+    </div>
+
     <h1 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-center text-gray-800">🧠 Jargonify</h1>
-    <p class="text-center text-gray-600 mb-5 sm:mb-6 text-sm sm:text-base">&copy; Exalux et Datamuse API</p>
+    <p class="text-center text-gray-600 mb-5 sm:mb-6 text-sm sm:text-base">© Exalux et Datamuse API</p>
 
     <textarea id="userInput" rows="5" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-sm sm:text-base" placeholder="Enter your sentence..."></textarea>
 
-    <div class="flex flex-col sm:flex-row gap-4 mb-6 items-stretch sm:items-center">
-      <button id="paraphraseBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base relative group">
-        Paraphrase
-        <span class="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-1 -top-8 left-1/2 transform -translate-x-1/2"></span>
-      </button>
+    <!-- Action buttons row -->
+    <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
+      <div class="flex gap-3">
+        <button id="paraphraseBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base shine-button">
+          Paraphrase
+        </button>
+        <button id="remixBtn" class="bg-gray-400 text-white py-2 px-4 sm:px-6 rounded-lg text-sm sm:text-base flex items-center gap-1 cursor-not-allowed" disabled>
+          <i class="fas fa-sync-alt"></i> Remix ↺
+        </button>
+      </div>
+      <div class="flex gap-3">
+        <button id="undoBtn" class="flex items-center gap-1 text-gray-600 hover:text-blue-600 text-sm sm:text-base">
+          <i class="fas fa-undo"></i> Undo
+        </button>
+        <button id="redoBtn" class="flex items-center gap-1 text-gray-600 hover:text-blue-600 text-sm sm:text-base">
+          <i class="fas fa-redo"></i> Redo
+        </button>
+      </div>
     </div>
 
     <!-- Progress bar -->
@@ -24,99 +95,219 @@
       <div id="progressFill" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
     </div>
 
-    <div id="output" class="bg-gray-50 border rounded-lg p-3 sm:p-4 text-gray-700 min-h-[80px] text-sm sm:text-base">
-      <p class="text-gray-500 italic">Paraphrased text will appear here...</p>
+    <!-- Output -->
+<div id="output" class="bg-gray-50 border rounded-lg p-3 sm:p-4 text-gray-700 min-h-[80px] text-sm sm:text-base whitespace-pre-line opacity-0 -translate-y-5 transition-all duration-500 collapsed">
+  <p class="text-gray-500 italic">Paraphrased text will appear here...</p>
+</div>
+
+<!-- Copy Button -->
+<div id="copyButtonContainer" class="mt-4 text-center opacity-0 -translate-y-5 transition-all duration-500 collapsed">
+  <button onclick="copyOutput()" class="text-blue-500 hover:underline text-sm flex items-center justify-center gap-2">
+    <i class="fas fa-copy"></i> Copy Result
+  </button>
+</div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-sm px-4 py-2 rounded-lg shadow-md hidden">
+      ✅ Copied to clipboard!
     </div>
 
-    <div class="mt-4 text-center">
-      <button onclick="copyOutput()" class="text-blue-500 hover:underline text-sm">Copy Result</button>
+    <!-- Error Toast -->
+    <div id="errorToast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-sm px-4 py-2 rounded-lg shadow-md hidden">
+      ❌ Failed to copy text!
     </div>
   </div>
 
-  <script>
-    async function fetchSynonyms(word) {
+<script>
+  let history = [];
+  let historyIndex = -1;
+  let outputHistory = [];
+  let isFirstParaphrase = true;
+
+  async function fetchSynonyms(word) {
+    const response = await fetch(`https://api.datamuse.com/words?rel_syn=${word}`);
+    const data = await response.json();
+    return data.map(item => item.word);
+  }
+
+  function preserveCase(original, replacement) {
+    return original[0] === original[0].toUpperCase()
+      ? replacement.charAt(0).toUpperCase() + replacement.slice(1)
+      : replacement;
+  }
+
+async function paraphraseText(fromRemix = false) {
+  const inputEl = document.getElementById('userInput');
+  const input = inputEl.value.trim();
+  const outputEl = document.getElementById('output');
+  const progressBar = document.getElementById('progressFill');
+  const remixBtn = document.getElementById('remixBtn');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const copyButtonContainer = document.getElementById('copyButtonContainer');
+
+  if (!input) {
+    outputEl.innerHTML = `<p class="text-red-500 italic">Please enter a sentence to paraphrase.</p>`;
+    remixBtn.disabled = true;
+    remixBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+    remixBtn.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+    updateButtonStates();
+    return;
+  }
+
+  outputEl.innerHTML = `<p class="text-blue-500 italic">Paraphrasing...</p>`;
+  progressBar.style.width = "0%";
+  remixBtn.disabled = true;
+  remixBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+  remixBtn.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+
+  const words = input.split(/\s+/);
+  const paraphrased = [];
+  let errorOccurred = false;
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const match = word.match(/^([a-zA-Z]+)([.,!?]*)$/);
+    if (!match) {
+      paraphrased.push(word);
+      continue;
+    }
+
+    const [_, base, punctuation] = match;
+
+    if (base.length < 3) {
+      paraphrased.push(word);
+    } else {
       try {
-        const response = await fetch(`https://api.datamuse.com/words?rel_syn=${word}`);
-        const data = await response.json();
-        return data.map(item => item.word);
-      } catch (err) {
-        throw new Error("Failed to connect to Datamuse API.");
-      }
-    }
-
-    function preserveCase(original, replacement) {
-      return original[0] === original[0].toUpperCase()
-        ? replacement.charAt(0).toUpperCase() + replacement.slice(1)
-        : replacement;
-    }
-
-    async function paraphraseText() {
-      const input = document.getElementById('userInput').value.trim();
-      const outputEl = document.getElementById('output');
-      const progressBar = document.getElementById('progressFill');
-
-      if (!input) {
-        outputEl.innerHTML = `<p class="text-red-500 italic">Please enter a sentence to paraphrase.</p>`;
-        return;
-      }
-
-      outputEl.innerHTML = `<p class="text-blue-500 italic">Paraphrasing...</p>`;
-      progressBar.style.width = "0%";
-
-      const words = input.split(/\s+/);
-      const paraphrased = [];
-      let errorOccurred = false;
-
-      for (let i = 0; i < words.length; i++) {
-        let word = words[i];
-
-        const match = word.match(/^([a-zA-Z]+)([.,!?]*)$/);
-        if (!match) {
-          paraphrased.push(word);
-          continue;
-        }
-
-        const [_, base, punctuation] = match;
-
-        // Skip words shorter than 3 characters
-        if (base.length < 3) {
-          paraphrased.push(word);
+        const synonyms = await fetchSynonyms(base.toLowerCase());
+        if (synonyms.length > 0) {
+          const replacement = preserveCase(base, synonyms[Math.floor(Math.random() * synonyms.length)]);
+          paraphrased.push(replacement + punctuation);
         } else {
-          try {
-            const synonyms = await fetchSynonyms(base.toLowerCase());
-            if (synonyms.length > 0) {
-              const replacement = preserveCase(base, synonyms[Math.floor(Math.random() * synonyms.length)]);
-              paraphrased.push(replacement + punctuation);
-            } else {
-              paraphrased.push(word);
-            }
-          } catch (error) {
-            paraphrased.push(word);
-            errorOccurred = true;
-            console.error(error);
-          }
+          paraphrased.push(word);
         }
-
-        // Update progress bar
-        const percent = Math.round(((i + 1) / words.length) * 100);
-        progressBar.style.width = percent + '%';
-      }
-
-      if (errorOccurred) {
-        outputEl.innerHTML = `<p class="text-yellow-600 italic mb-2">⚠ Some words couldn't be paraphrased due to API errors.</p><p>${paraphrased.join(' ')}</p>`;
-      } else {
-        outputEl.innerHTML = `<p>${paraphrased.join(' ')}</p>`;
+      } catch {
+        paraphrased.push(word);
+        errorOccurred = true;
       }
     }
 
-    function copyOutput() {
-      const text = document.getElementById('output').innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Copied to clipboard!');
-      });
+    progressBar.style.width = `${Math.round(((i + 1) / words.length) * 100)}%`;
+  }
+
+  const result = paraphrased.join(' ');
+  outputEl.textContent = errorOccurred
+    ? `⚠ Some words couldn't be paraphrased due to API issues.\n\n${result}`
+    : result;
+
+  if (!fromRemix) {
+    history = history.slice(0, historyIndex + 1);
+    outputHistory = outputHistory.slice(0, historyIndex + 1);
+    history.push(input);
+    outputHistory.push(outputEl.textContent);
+    historyIndex++;
+  }
+
+  remixBtn.disabled = outputEl.textContent.includes("will appear here") || outputEl.textContent.includes("Please enter a sentence");
+  if (!remixBtn.disabled) {
+    remixBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+    remixBtn.classList.add('bg-purple-500', 'hover:bg-purple-600');
+  }
+
+  // Trigger slide-down animation on first paraphrase
+  if (isFirstParaphrase && !outputEl.textContent.includes("Please enter a sentence")) {
+    outputEl.classList.remove('collapsed', 'opacity-0', '-translate-y-5');
+    outputEl.classList.add('opacity-100', 'translate-y-0');
+    copyButtonContainer.classList.remove('collapsed', 'opacity-0', '-translate-y-5');
+    copyButtonContainer.classList.add('opacity-100', 'translate-y-0');
+    isFirstParaphrase = false;
+  }
+
+  // Reset progress bar after a short delay
+  setTimeout(() => {
+    progressBar.style.width = "0%";
+  }, 500);
+
+  updateButtonStates();
+}
+
+function copyOutput() {
+  const outputEl = document.getElementById('output');
+  const text = outputEl.textContent; // Use textContent without trim to match older code
+  const toast = document.getElementById('toast');
+  const errorToast = document.getElementById('errorToast');
+
+  // Check if there's valid text to copy
+  if (!text || text.includes("Paraphrased text will appear here") || text.includes("Please enter a sentence")) {
+    errorToast.classList.remove('hidden');
+    setTimeout(() => errorToast.classList.add('hidden'), 2000);
+    return;
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 2000);
+  }).catch(() => {
+    errorToast.classList.remove('hidden');
+    setTimeout(() => errorToast.classList.add('hidden'), 2000);
+  });
+}
+  function remixText() {
+    const currentOutput = document.getElementById('output').textContent;
+    if (currentOutput && !currentOutput.includes("will appear here") && !currentOutput.includes("Please enter a sentence")) {
+      document.getElementById('userInput').value = currentOutput;
+      paraphraseText(true);
+    }
+  }
+
+  function undoText() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      document.getElementById('userInput').value = history[historyIndex] || "";
+      document.getElementById('output').textContent = outputHistory[historyIndex] || "Paraphrased text will appear here...";
+      updateButtonStates();
+    }
+  }
+
+  function redoText() {
+    if (historyIndex < history.length - 1) {
+      historyIndex++;
+      document.getElementById('userInput').value = history[historyIndex] || "";
+      document.getElementById('output').textContent = outputHistory[historyIndex] || "Paraphrased text will appear here...";
+      updateButtonStates();
+    }
+  }
+
+  function updateButtonStates() {
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+
+    // Disable/enable undo button
+    if (historyIndex <= 0) {
+      undoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      undoBtn.classList.remove('hover:text-blue-600');
+    } else {
+      undoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      undoBtn.classList.add('hover:text-blue-600');
     }
 
-    document.getElementById("paraphraseBtn").addEventListener("click", paraphraseText);
-  </script>
+    // Disable/enable redo button
+    if (historyIndex >= history.length - 1) {
+      redoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      redoBtn.classList.remove('hover:text-blue-600');
+    } else {
+      redoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      redoBtn.classList.add('hover:text-blue-600');
+    }
+  }
+
+  document.getElementById("paraphraseBtn").addEventListener("click", () => paraphraseText());
+  document.getElementById("remixBtn").addEventListener("click", remixText);
+  document.getElementById("undoBtn").addEventListener("click", undoText);
+  document.getElementById("redoBtn").addEventListener("click", redoText);
+
+  // Initialize button states on page load
+  updateButtonStates();
+</script>
 </body>
 </html>
