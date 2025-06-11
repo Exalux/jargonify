@@ -19,6 +19,11 @@
       </button>
     </div>
 
+    <!-- Progress bar -->
+    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+      <div id="progressFill" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+    </div>
+
     <div id="output" class="bg-gray-50 border rounded-lg p-3 sm:p-4 text-gray-700 min-h-[80px] text-sm sm:text-base">
       <p class="text-gray-500 italic">Paraphrased text will appear here...</p>
     </div>
@@ -35,21 +40,20 @@
         const data = await response.json();
         return data.map(item => item.word);
       } catch (err) {
-        console.error('API error:', err);
-        return [];
+        throw new Error("Failed to connect to Datamuse API.");
       }
     }
 
     function preserveCase(original, replacement) {
-      if (original[0] === original[0].toUpperCase()) {
-        return replacement.charAt(0).toUpperCase() + replacement.slice(1);
-      }
-      return replacement;
+      return original[0] === original[0].toUpperCase()
+        ? replacement.charAt(0).toUpperCase() + replacement.slice(1)
+        : replacement;
     }
 
     async function paraphraseText() {
       const input = document.getElementById('userInput').value.trim();
       const outputEl = document.getElementById('output');
+      const progressBar = document.getElementById('progressFill');
 
       if (!input) {
         outputEl.innerHTML = `<p class="text-red-500 italic">Please enter a sentence to paraphrase.</p>`;
@@ -57,11 +61,15 @@
       }
 
       outputEl.innerHTML = `<p class="text-blue-500 italic">Paraphrasing...</p>`;
+      progressBar.style.width = "0%";
 
       const words = input.split(/\s+/);
       const paraphrased = [];
+      let errorOccurred = false;
 
-      for (let word of words) {
+      for (let i = 0; i < words.length; i++) {
+        let word = words[i];
+
         const match = word.match(/^([a-zA-Z]+)([.,!?]*)$/);
         if (!match) {
           paraphrased.push(word);
@@ -69,17 +77,36 @@
         }
 
         const [_, base, punctuation] = match;
-        const synonyms = await fetchSynonyms(base.toLowerCase());
 
-        if (synonyms.length > 0) {
-          const replacement = preserveCase(base, synonyms[Math.floor(Math.random() * synonyms.length)]);
-          paraphrased.push(replacement + punctuation);
-        } else {
+        // Skip words shorter than 3 characters
+        if (base.length < 3) {
           paraphrased.push(word);
+        } else {
+          try {
+            const synonyms = await fetchSynonyms(base.toLowerCase());
+            if (synonyms.length > 0) {
+              const replacement = preserveCase(base, synonyms[Math.floor(Math.random() * synonyms.length)]);
+              paraphrased.push(replacement + punctuation);
+            } else {
+              paraphrased.push(word);
+            }
+          } catch (error) {
+            paraphrased.push(word);
+            errorOccurred = true;
+            console.error(error);
+          }
         }
+
+        // Update progress bar
+        const percent = Math.round(((i + 1) / words.length) * 100);
+        progressBar.style.width = percent + '%';
       }
 
-      outputEl.innerHTML = `<p>${paraphrased.join(' ')}</p>`;
+      if (errorOccurred) {
+        outputEl.innerHTML = `<p class="text-yellow-600 italic mb-2">⚠ Some words couldn't be paraphrased due to API errors.</p><p>${paraphrased.join(' ')}</p>`;
+      } else {
+        outputEl.innerHTML = `<p>${paraphrased.join(' ')}</p>`;
+      }
     }
 
     function copyOutput() {
